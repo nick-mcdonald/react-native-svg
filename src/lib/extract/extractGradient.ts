@@ -37,6 +37,8 @@ function percentToFloat(
 const offsetComparator = (object: number[], other: number[]) =>
   object[0] - other[0];
 
+const childHRefCache : Record<string, unknown> = {}
+
 export default function extractGradient(
   props: {
     id?: string;
@@ -44,22 +46,29 @@ export default function extractGradient(
     transform?: number[] | string | TransformProps;
     gradientTransform?: number[] | string | TransformProps;
     gradientUnits?: 'objectBoundingBox' | 'userSpaceOnUse';
+    href: string;
   } & TransformProps,
   parent: {},
 ) {
-  const { id, children, gradientTransform, transform, gradientUnits } = props;
+  const { id, children, gradientTransform, transform, gradientUnits, href } = props;
   if (!id) {
     return null;
   }
 
   const stops = [];
-  const childArray = children
-    ? Children.map(children, child =>
-        React.cloneElement(child, {
-          parent,
-        }),
-      )
-    : [];
+  const childArray = ( href )
+    ? childHRefCache[href] : children
+      ? Children.map(children, child =>
+          React.cloneElement(child, {
+            parent,
+          }),
+        )
+      : [];
+
+    if ( !href ) {
+      childHRefCache["#" + id] = childArray
+    }
+
   const l = childArray.length;
   for (let i = 0; i < l; i++) {
     const {
